@@ -1,4 +1,4 @@
-const CACHE="decatrack-v10";
+const CACHE="decatrack-v11";
 const ASSETS=[
   "./",
   "./index.html",

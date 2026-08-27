@@ -857,3 +857,246 @@ hr { border:0; border-top:1px solid var(--border); margin:18px 0; }
     grid-template-columns: repeat(2,minmax(0,1fr));
   }
 }
+
+
+/* v11 – iPhone Skalierung & Form-Fixes */
+
+/* Verhindert Safari-Autozoom bei Fokus auf Formularfelder */
+input,
+textarea,
+select,
+button {
+  font-size: 16px;
+}
+
+/* Inputs dürfen niemals breiter als ihr Container werden */
+input,
+textarea,
+select {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Alle wichtigen Layout-Container sauber innerhalb der Bildschirmbreite halten */
+.content,
+.card,
+.hero,
+.calendar-shell,
+.area-overview,
+.strength-overview,
+.dialog-card,
+.entry,
+.exercise-editor,
+.goal-display,
+.detail-row,
+.info-row,
+.collapsible,
+.calendar-training-card,
+.dashboard-area-row,
+.dashboard-quick-card,
+.overview-stat {
+  min-width: 0;
+  width: 100%;
+}
+
+/* Grid-Kinder dürfen schrumpfen, statt horizontal zu überlaufen */
+.grid > *,
+.exercise-grid > *,
+.overview-stats > *,
+.discipline-grid > *,
+.dashboard-quick-grid > *,
+.backup-grid > *,
+.info-editor-row > *,
+.dialog-actions > * {
+  min-width: 0;
+}
+
+/* Lange Texte sauber umbrechen */
+.entry-title,
+.entry-meta,
+.entry-result,
+.entry-preview,
+.entry-notes,
+.goal-display strong,
+.info-row strong,
+.detail-row p,
+.detail-row strong,
+.discipline-name,
+.calendar-training-body,
+.exercise-summary strong,
+.exercise-summary span {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* iOS Formfelder konsistenter */
+input,
+textarea,
+select {
+  min-height: 48px;
+  border-radius: 13px;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+textarea {
+  min-height: 110px;
+}
+
+/* Select-Pfeil / Touch-Handling */
+select {
+  padding-right: 38px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 12px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* Dialoge nicht breiter als das iPhone */
+.dialog {
+  width: min(94vw, 560px);
+  max-width: 94vw;
+}
+
+.dialog-card {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Kompakte responsive Kraft-Übungsfelder */
+.exercise-grid {
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  .content {
+    width: 100%;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .topbar {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .hero,
+  .card,
+  .calendar-shell,
+  .area-overview,
+  .strength-overview {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .exercise-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .exercise-grid .exercise-name {
+    grid-column: 1 / -1;
+  }
+
+  .exercise-grid input {
+    width: 100%;
+  }
+
+  .overview-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .overview-stat {
+    padding: 10px 8px;
+  }
+
+  .overview-stat strong {
+    font-size: 16px;
+  }
+
+  .overview-stat span {
+    font-size: 10px;
+  }
+
+  .discipline-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .discipline-card {
+    width: 100%;
+  }
+
+  .calendar-month-summary {
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr) auto;
+  }
+
+  .calendar-month-summary .btn {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .dialog-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rating-scale-wide {
+    grid-template-columns: repeat(6, minmax(0,1fr));
+  }
+
+  .rating-choice {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .backup-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .info-editor-row {
+    grid-template-columns: 1fr;
+  }
+
+  .info-editor-row .btn {
+    width: 100%;
+  }
+
+  .exercise-summary {
+    width: 100%;
+    grid-template-columns: 1fr auto;
+  }
+
+  .exercise-summary > * {
+    min-width: 0;
+  }
+
+  .calendar-day {
+    min-width: 0;
+  }
+}
+
+/* Sehr schmale iPhones */
+@media (max-width: 380px) {
+  .content {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .discipline-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .overview-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .overview-stats .overview-stat:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .dashboard-quick-grid {
+    grid-template-columns: 1fr;
+  }
+}

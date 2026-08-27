@@ -1,3 +1,13 @@
+# DecaTrack v11
+
+Neu in v11:
+- iPhone Safari zoomt beim Anklicken von Text-/Formfeldern nicht mehr automatisch hinein.
+- Alle Eingabefelder nutzen mindestens 16 px Schriftgröße.
+- Mobile Boxen und Grids wurden auf gleiche Breiten und sauberes Shrinking optimiert.
+- Verbesserter Umbruch für lange Texte.
+- Krafttrainingsfelder, Kalender, Dialoge, Disziplin-Kacheln und Backup-Grid sind responsiver.
+- Zusätzliche Optimierung für sehr schmale iPhones.
+
 # DecaTrack v10
 
 Neu in v10:

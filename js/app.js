@@ -65,7 +65,7 @@ function initialState() {
   infos[ATHLETICS.id] = [];
 
   return {
-    version: 10,
+    version: 11,
     goals,
     infos,
     entries: [],
@@ -144,7 +144,7 @@ function migrateState(parsed) {
   return {
     ...base,
     ...parsed,
-    version: 10,
+    version: 11,
     goals,
     infos,
     entries,
