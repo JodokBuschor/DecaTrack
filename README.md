@@ -1,54 +1,50 @@
-# DecaTrack v11
+# DecaTrack v12
 
-Neu in v11:
-- iPhone Safari zoomt beim Anklicken von Text-/Formfeldern nicht mehr automatisch hinein.
-- Alle Eingabefelder nutzen mindestens 16 px Schriftgröße.
-- Mobile Boxen und Grids wurden auf gleiche Breiten und sauberes Shrinking optimiert.
-- Verbesserter Umbruch für lange Texte.
-- Krafttrainingsfelder, Kalender, Dialoge, Disziplin-Kacheln und Backup-Grid sind responsiver.
-- Zusätzliche Optimierung für sehr schmale iPhones.
+DecaTrack ist ein lokales, frei konfigurierbares Trainingstagebuch als Progressive Web App (PWA). Die App speichert alle Daten im Browser und kann auf dem iPhone zum Home-Bildschirm hinzugefügt werden.
 
-# DecaTrack v10
+## Neu in v12
 
-Neu in v10:
-- neues App-Icon integriert (PWA-Icons und Apple-Touch-Icon)
-- Service-Worker-Cache auf v10 angehoben
-- App-Version auf v10 gesetzt
+- Disziplinen sind nicht mehr fest im Code vorgegeben.
+- Eigene Disziplinen können hinzugefügt, umbenannt, mit Icon/Farbe versehen und gelöscht werden.
+- Bei einem Update von v11 werden die bisherigen zehn Zehnkampf-Disziplinen und Athletik automatisch übernommen.
+- Krafttraining: das Feld „Gewicht / Last“ akzeptiert Freitext, z. B. `100–120 kg`, `BW + 20 kg` oder `100 kg + Band`.
+- Disziplin-Infos sind immer sichtbar; das Formular für neue Infos erscheint erst nach „+ Info“.
+- Einzelne Disziplin-Infos können bearbeitet und gelöscht werden.
+- Ziele sind auf der Disziplinseite optisch stärker hervorgehoben.
+- Disziplintrainings können nachträglich bearbeitet werden.
+- Krafteinheiten können nachträglich bearbeitet werden, inklusive Übungen, Sätzen, Wiederholungen, Last, Bewertungen und Notizen.
+- Manifest und App-Beschreibung wurden von „Zehnkampf“ auf ein universelles Trainingstagebuch angepasst.
+- Die iPhone-Optimierungen aus v11 bleiben erhalten: 16-px-Formfelder gegen Safari-Autozoom, responsive Boxen und PWA-Unterstützung.
 
-# DecaTrack v9
+## Datenspeicherung und Migration
 
-## Neu
-- Kraft-Verlauf zeigt maximal die letzten 5 Einheiten.
-- Jede Disziplin-/Athletikseite zeigt maximal die letzten 5 Trainings.
-- Neue, offline verfügbare SVG-Icons in der unteren Tab-Navigation.
-- Jede Disziplin wird nur noch mit Name + kleinem Sport-Icon dargestellt.
-- Backup-Seite zeigt, welche Datenmengen im Backup enthalten sind.
-- Vollständige iPhone/PWA-Vorbereitung mit Manifest, Apple-Touch-Icon, 192/512-PWA-Icons und Offline-Service-Worker.
+Der LocalStorage-Key bleibt unverändert (`decatrack_v1`). Dadurch findet v12 die bestehenden v11-Daten automatisch.
+
+Beim ersten Laden von v12 werden alte Daten in das neue v12-Format überführt. Athletik wird dabei zu einer normalen, frei verwaltbaren Disziplin. Bestehende Athletiktrainings werden in die gemeinsame Trainingsliste übernommen.
 
 ## Backup
-Der Export schreibt den kompletten zentralen App-State in eine JSON-Datei. Enthalten sind:
+
+Der JSON-Export enthält den kompletten zentralen App-State:
+
+- selbst angelegte Disziplinen mit Name, Icon und Farbe
 - Leistungs- und Technikziele
-- alle frei angelegten Disziplin-/Athletik-Infos
-- alle Disziplintrainings inkl. Datum, Beschreibung, Resultat und Bewertung
-- alle Athletiktrainings inkl. Datum, Beschreibung, Resultat und Bewertung
+- alle Disziplin-Infos
+- alle Disziplintrainings mit Datum, Beschreibung, Resultat und Bewertung
 - alle Krafttrainingseinheiten
-- alle Übungen je Krafttraining inkl. Sätze, Wiederholungen, Gewicht und Einzelbewertung
-- Gesamtbewertung und Notizen jeder Krafttrainingseinheit
+- alle Übungen je Krafteinheit inklusive Sätze, Wiederholungen, Last und Einzelbewertung
+- Gesamtbewertung und Notizen jeder Krafteinheit
 
-Übungs-Dropdown, Kalender und 0–100-Status werden aus diesen gespeicherten Daten berechnet und müssen daher nicht separat gesichert werden.
+Ein v11-Backup kann weiterhin importiert werden und wird beim Import automatisch migriert.
 
-## Auf dem iPhone als App installieren
-Eine PWA muss über HTTPS oder localhost ausgeliefert werden. Einfach die `index.html` aus der Dateien-App zu öffnen reicht für eine zuverlässige PWA nicht.
+## PWA / iPhone
 
-Empfohlen: GitHub Pages
-1. Den gesamten Inhalt dieses Projektordners in ein GitHub-Repository laden.
-2. In GitHub: Settings > Pages.
-3. Als Source den Branch `main` und den Root-Ordner auswählen.
-4. Die erzeugte HTTPS-Adresse auf dem iPhone in Safari öffnen.
-5. Teilen-Symbol antippen.
-6. `Zum Home-Bildschirm` wählen.
-7. `Hinzufügen` wählen.
+Die App enthält weiterhin:
 
-Danach startet DecaTrack im Standalone-Modus und die App-Dateien stehen nach dem ersten erfolgreichen Laden offline zur Verfügung.
+- `manifest.webmanifest`
+- Apple-Touch-Icon
+- 192x192- und 512x512-PWA-Icons
+- Service Worker für Offline-Nutzung
+- Safe-Area-Unterstützung für iPhones
+- Formfeld-Grössen, die Safari-Autozoom verhindern
 
-Wichtig: Trainingsdaten liegen weiterhin lokal in Safari/WebKit auf dem iPhone. Regelmässige JSON-Backups sind deshalb empfehlenswert.
+Wichtig: Für Service Worker und PWA-Installation muss die App über HTTPS oder localhost ausgeliefert werden, z. B. über GitHub Pages.

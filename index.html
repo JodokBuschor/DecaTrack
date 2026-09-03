@@ -9,8 +9,8 @@
   <meta name="apple-mobile-web-app-title" content="DecaTrack" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no" />
-  <meta name="description" content="Lokales Zehnkampf-, Athletik- und Krafttrainingstagebuch." />
-  <title>DecaTrack – Zehnkampf Trainingstagebuch</title>
+  <meta name="description" content="Lokales, frei konfigurierbares Trainingstagebuch für Disziplin- und Krafttraining." />
+  <title>DecaTrack – Trainingstagebuch</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
@@ -66,19 +66,7 @@
       <div id="entry-dialog-accent" class="entry-dialog-accent">
         <label>
           Disziplin / Bereich
-          <select id="entry-area-select" required>
-            <option value="100m">100 m</option>
-            <option value="longjump">Weitsprung</option>
-            <option value="shotput">Kugelstossen</option>
-            <option value="highjump">Hochsprung</option>
-            <option value="400m">400 m</option>
-            <option value="110h">110 m Hürden</option>
-            <option value="discus">Diskus</option>
-            <option value="polevault">Stabhochsprung</option>
-            <option value="javelin">Speer</option>
-            <option value="1500m">1500 m</option>
-            <option value="athletics">Athletik</option>
-          </select>
+          <select id="entry-area-select" required></select>
         </label>
       </div>
 
@@ -136,8 +124,9 @@
         <button type="button" class="icon-btn ghost" id="close-detail-dialog">×</button>
       </div>
       <div id="detail-content"></div>
-      <div class="dialog-actions">
+      <div class="dialog-actions detail-dialog-actions">
         <button type="button" class="btn secondary" id="close-detail-bottom">Schliessen</button>
+        <button type="button" class="btn secondary" id="edit-detail-entry">Bearbeiten</button>
         <button type="button" class="btn danger" id="delete-detail-entry">Eintrag löschen</button>
       </div>
     </div>
