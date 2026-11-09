@@ -1,4 +1,8 @@
-# DecaTrack v12
+# DecaTrack v13.2
+
+Neu in v13.2: Wettkampf-Auswahl mit deutlich sichtbarem Aktiv-/Aus-Zustand und Trendlinien-Symbol für das Kraft-Dashboard. Der bestehende lokale Datenspeicher und die Backup-Struktur bleiben unverändert.
+
+## Grundlage: DecaTrack v12
 
 DecaTrack ist ein lokales, frei konfigurierbares Trainingstagebuch als Progressive Web App (PWA). Die App speichert alle Daten im Browser und kann auf dem iPhone zum Home-Bildschirm hinzugefügt werden.
 

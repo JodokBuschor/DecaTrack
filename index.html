@@ -88,7 +88,12 @@
         <input id="entry-result" type="text" placeholder="z. B. 10.98 s, 6.85 m, 5 × 30 m" />
       </label>
 
-      <label class="competition-toggle"><input id="entry-competition" type="checkbox" /> <span>🏆 Als Wettkampf markieren</span></label>
+      <label class="competition-toggle">
+        <input id="entry-competition" type="checkbox" />
+        <span class="competition-check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"/></svg></span>
+        <span class="competition-label"><strong>🏆 Als Wettkampf markieren</strong><small class="competition-hint-off">Normales Training</small><small class="competition-hint-on">Wettkampf ausgewählt</small></span>
+        <span class="competition-state" aria-hidden="true"><span class="state-off">Aus</span><span class="state-on">Aktiv</span></span>
+      </label>
       <p class="muted small" id="entry-autosave">Entwurf wird automatisch gespeichert.</p>
 
       <div class="rating-field">

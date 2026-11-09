@@ -1377,15 +1377,57 @@ select {
 /* Erweiterungen v13 */
 .calendar-day.competition-day { box-shadow: inset 0 0 0 1px #e3ad49; background:rgba(227,173,73,.10); }
 .calendar-competition-marker { font-size:12px;line-height:12px; }
-.competition-toggle { display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #987435;border-radius:12px;background:rgba(227,173,73,.08); }
-.competition-toggle input { width:20px;height:20px;flex-shrink:0;accent-color:#e3ad49; }
+/* Deutlich erkennbare, vollständig anklickbare Wettkampf-Auswahl */
+.competition-toggle {
+  display:flex; align-items:center; gap:12px; padding:14px;
+  margin-bottom:12px; border:2px solid #47505b; border-radius:15px;
+  background:#1b2026; cursor:pointer; min-height:72px;
+  transition:background .15s ease,border-color .15s ease,box-shadow .15s ease;
+  position:relative;
+}
+.competition-toggle input {
+  position:absolute; width:1px; height:1px; padding:0; margin:0;
+  opacity:0; overflow:hidden; pointer-events:none;
+}
+.competition-check {
+  flex:none; display:grid; place-items:center; width:30px; height:30px;
+  border:2px solid #8b96a4; border-radius:9px; color:transparent;
+  background:#0d1217; transition:all .15s ease;
+}
+.competition-check svg {width:19px;height:19px;}
+.competition-label {flex:1;min-width:0;display:grid;gap:4px;}
+.competition-label strong {font-size:14px;color:var(--text);}
+.competition-label small {font-size:12px;color:var(--muted);font-weight:500;}
+.competition-hint-on,.state-on {display:none;}
+.competition-state {
+  flex:none; padding:5px 9px; font-size:11px; font-weight:850;
+  border:1px solid #4a5661; border-radius:999px; color:#b6c0c9;
+}
+.competition-toggle:has(input:checked) {
+  background:rgba(255,191,105,.15); border-color:#ffbf69;
+  box-shadow:0 0 0 1px rgba(255,191,105,.22);
+}
+.competition-toggle input:checked + .competition-check {
+  background:#ffbf69; border-color:#ffbf69; color:#16150f;
+}
+.competition-toggle input:checked ~ .competition-label .competition-hint-off,
+.competition-toggle input:checked ~ .competition-state .state-off {display:none;}
+.competition-toggle input:checked ~ .competition-label .competition-hint-on,
+.competition-toggle input:checked ~ .competition-state .state-on {display:inline;}
+.competition-toggle input:checked ~ .competition-state {
+  color:#ffcf85; border-color:#ffbf69; background:rgba(255,191,105,.12);
+}
+.competition-toggle:has(input:focus-visible) {outline:3px solid var(--accent);outline-offset:3px;}
+.competition-toggle:active {transform:scale(.995);}
+
 .exercise-name-picker {position:relative;grid-column:1 / -1;min-width:0;}
 .exercise-name-picker input {width:100%;}
 .exercise-suggestions {position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:20;max-height:220px;overflow-y:auto;background:#1d232b;border:1px solid #73808c;border-radius:12px;box-shadow:0 12px 25px #0008;}
 .exercise-suggestions[hidden] {display:none;}
 .exercise-option {display:block;width:100%;padding:12px 14px;text-align:left;border:0;border-bottom:1px solid #ffffff16;background:transparent;color:#fff;font:inherit;cursor:pointer;}
 .exercise-option:hover,.exercise-option:focus {background:#344052;}
-.stats-button {font-size:25px;flex-shrink:0;}
+.stats-button {flex-shrink:0;}
+.stats-button svg {display:block;width:24px;height:24px;}
 .strength-stats-panel {display:grid;gap:16px;}
 .strength-stats-panel h3 {font-size:16px;margin:6px 0 0;}
 .strength-records {display:grid;gap:7px;}

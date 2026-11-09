@@ -1211,7 +1211,9 @@ function renderStrength() {
           <p class="eyebrow">KRAFTÜBERSICHT</p>
           <h2>Dein Krafttraining</h2>
         </div>
-        <button class="icon-btn stats-button" data-action="toggle-strength-stats" type="button" aria-label="Kraft-Dashboard öffnen" title="Kraft-Dashboard">▥</button>
+        <button class="icon-btn stats-button" data-action="toggle-strength-stats" type="button" aria-label="Kraft-Dashboard öffnen" title="Kraft-Dashboard" aria-expanded="${strengthStatsOpen}">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-9"/><path d="M15 6h6v6"/></svg>
+        </button>
       </div>
 
       <div class="overview-stats">
