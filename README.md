@@ -48,3 +48,16 @@ Die App enthält weiterhin:
 - Formfeld-Grössen, die Safari-Autozoom verhindern
 
 Wichtig: Für Service Worker und PWA-Installation muss die App über HTTPS oder localhost ausgeliefert werden, z. B. über GitHub Pages.
+
+
+## Neu in v13
+- Kraft-Übungsfeld: bekannte Übungen werden beim Fokussieren direkt zur Auswahl angeboten, Tippfilter inklusive.
+- Wettkampf-Checkbox bei Disziplin-Einträgen; Pokal-Markierung im Kalender, Verlauf und Detail.
+- Lokale Entwürfe für Disziplin-Einträge und Kraftsessions inklusive noch nicht übernommener Übungseingaben. Die Entwürfe liegen getrennt von Trainings und Backup in `decatrack_drafts_v13`. Beim definitiven Speichern wird der jeweilige Entwurf gelöscht.
+- Kraft-Dashboard über das Symbol oben rechts mit Bestgewichten (höchster Zahlenwert) und Trainingsentwicklung.
+- Der Trainingsdaten-Schlüssel bleibt `decatrack_v1`, sodass vorhandene Daten automatisch erhalten bleiben.
+
+## Update v13.1
+
+- Kraft-Dashboard: Sichtbarkeitsfehler der Statistikfunktionen behoben; Dashboard und erneutes Öffnen des Kraft-Tabs funktionieren wieder.
+- Service-Worker-Cache aktualisiert, damit die korrigierte JavaScript-Datei bei einem Update geladen wird.

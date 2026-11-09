@@ -94,7 +94,7 @@ function sanitizeDiscipline(d, index = 0) {
 
 function initialState() {
   return {
-    version:12,
+    version:13,
     disciplines:[],
     goals:{},
     infos:{},
@@ -142,6 +142,7 @@ function migrateState(parsed) {
       date:String(e?.date || ""),
       description:String(e?.description || e?.notes || e?.type || ""),
       result:String(e?.result || ""),
+      competition:Boolean(e?.competition),
       rating:migrateLegacyRating(e?.rating ?? 0, sourceVersion)
     }))
     .filter(e => {
@@ -188,7 +189,7 @@ function migrateState(parsed) {
 
   return {
     ...base,
-    version:12,
+    version:13,
     disciplines,
     goals,
     infos,
@@ -221,6 +222,39 @@ let editingStrengthSessionId = null;
 let editingStrengthExerciseIndex = null;
 let calendarCursor = new Date();
 let selectedCalendarDate = todayISO();
+let strengthStatsOpen = false;
+const DRAFT_KEY = "decatrack_drafts_v13";
+function readDrafts() { try { return JSON.parse(localStorage.getItem(DRAFT_KEY)) || {}; } catch { return {}; } }
+function putDraft(kind, data) {
+  const drafts = readDrafts();
+  drafts[kind] = data;
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts)); } catch (err) { console.warn("Entwurf konnte nicht gespeichert werden",err); }
+}
+function removeDraft(kind) {
+  const drafts=readDrafts(); delete drafts[kind];
+  localStorage.setItem(DRAFT_KEY,JSON.stringify(drafts));
+}
+function captureStrengthDraft() {
+  const form=document.getElementById("strength-session-form");
+  if (!form) return;
+  const fd=new FormData(form);
+  putDraft("strength",{editingId:editingStrengthSessionId, exercises:clone(strengthDraftExercises), editingIndex:editingStrengthExerciseIndex,
+    date:String(fd.get("date")||""),rating:String(fd.get("rating")||"0"), notes:String(fd.get("notes")||""),
+    active:{name:document.getElementById("strength-name")?.value||"",sets:document.getElementById("strength-sets")?.value||"",reps:document.getElementById("strength-reps")?.value||"",weight:document.getElementById("strength-weight")?.value||"",rating:document.getElementById("strength-exercise-rating")?.value||"0"}});
+  const indicator=document.getElementById("strength-autosave"); if(indicator) indicator.textContent="✓ Entwurf gespeichert";
+}
+function captureEntryDraft() {
+  if (!entryDialog.open) return;
+  putDraft("entry",{editingId:editingEntryContext?.id||null,areaId:document.getElementById("entry-discipline-id").value,date:document.getElementById("entry-date").value,
+    description:document.getElementById("entry-description").value,result:document.getElementById("entry-result").value,
+    rating:document.getElementById("entry-rating-value").value,competition:document.getElementById("entry-competition").checked});
+  const indicator=document.getElementById("entry-autosave"); if(indicator) indicator.textContent="✓ Entwurf gespeichert";
+}
+function updateEntryRating(value) {
+  document.getElementById("entry-rating-value").value=String(value);
+  document.querySelectorAll("[data-entry-rating]").forEach(btn=>btn.classList.toggle("active",btn.dataset.entryRating===String(value)));
+}
+
 
 const app = document.getElementById("app");
 const pageTitle = document.getElementById("page-title");
@@ -230,7 +264,7 @@ const detailDialog = document.getElementById("detail-dialog");
 const editDetailBtn = document.getElementById("edit-detail-entry");
 
 function saveState() {
-  state.version = 12;
+  state.version = 13;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
@@ -338,6 +372,7 @@ function setRoute(page,id=null) {
     editingDisciplineId = null;
   }
   if (page !== "strength") {
+    if (strengthFormOpen) captureStrengthDraft();
     strengthFormOpen = false;
     editingStrengthSessionId = null;
     editingStrengthExerciseIndex = null;
@@ -347,6 +382,76 @@ function setRoute(page,id=null) {
   location.hash = id ? `${page}/${id}` : page;
   render();
 }
+
+// Kraftstatistik: groesstes klar lesbares Gewicht (bei Bereichen der obere Wert).
+function numericMaxWeight(raw) {
+  const matches=String(raw||"").replace(/,/g,".").match(/\d+(?:\.\d+)?/g)||[];
+  if(!matches.length) return null;
+  const nums=matches.map(Number).filter(Number.isFinite);
+  return nums.length?Math.max(...nums):null;
+}
+function strengthExerciseStats() {
+  const byName=new Map();
+  state.strengthSessions.forEach(session=>(session.exercises||[]).forEach(ex=>{
+    const name=String(ex.name||"").trim(), key=name.toLocaleLowerCase("de");
+    if(!name) return;
+    if(!byName.has(key)) byName.set(key,{name,count:0,best:null,history:[]});
+    const item=byName.get(key); item.count++;
+    const weight=numericMaxWeight(ex.weight);
+    if(weight===null) return;
+    const point={date:session.date,weight,reps:ex.reps,sets:ex.sets,raw:ex.weight};
+    item.history.push(point);
+    if(!item.best || weight>item.best.weight) item.best=point;
+  }));
+  return [...byName.values()].sort((a,b)=>a.name.localeCompare(b.name,"de"));
+}
+function renderStrengthStatistics() {
+  const stats=strengthExerciseStats();
+  return `<section class="section card strength-stats-panel">
+    <div class="section-head"><h2>📊 Kraft-Dashboard</h2><button type="button" class="btn secondary small-btn" data-action="toggle-strength-stats">Schliessen</button></div>
+    <div class="overview-stats"><div class="overview-stat"><strong>${state.strengthSessions.length}</strong><span>Einheiten</span></div><div class="overview-stat"><strong>${stats.length}</strong><span>Übungen</span></div><div class="overview-stat"><strong>${stats.filter(x=>x.best).length}</strong><span>Bestwerte</span></div></div>
+    <h3>Bestleistungen</h3>
+    ${stats.length ? `<div class="strength-records">${stats.map(item=>`<div class="strength-record"><div><strong>${escapeHtml(item.name)}</strong><small>${item.count} Einträge</small></div><div class="record-value">${item.best ? `${escapeHtml(item.best.raw)} · ${escapeHtml(item.best.reps||"–")} Wdh.<small>${formatDate(item.best.date)}</small>`:"Kein Gewicht erfasst"}</div></div>`).join("")}</div>` : `<p class="muted small">Nach dem ersten gespeicherten Krafttraining erscheinen hier deine Bestleistungen.</p>`}
+    ${stats.some(x=>x.history.length) ? `<h3>Gewichtsentwicklung</h3><label>Übung auswählen<select id="stats-exercise-select">${stats.filter(x=>x.history.length).map(x=>`<option value="${escapeHtml(x.name)}">${escapeHtml(x.name)}</option>`).join("")}</select></label><div id="strength-progress-chart" class="strength-progress-chart"></div><p class="muted small">Pro Training wird das höchste erkannte Gewicht angezeigt. Bei Gewichtsbereichen zählt der obere Wert; Wiederholungszahlen werden separat dargestellt.</p>` : ""}
+  </section>`;
+}
+function drawStrengthChart() {
+  const select=document.getElementById("stats-exercise-select"), host=document.getElementById("strength-progress-chart");
+  if(!select||!host) return;
+  const stat=strengthExerciseStats().find(x=>x.name===select.value);
+  const points=[...(stat?.history||[])].sort((a,b)=>a.date.localeCompare(b.date));
+  if(!points.length) {host.textContent="Keine Gewichtsdaten";return;}
+  const width=320,height=155,pad=24;
+  const low=Math.min(...points.map(p=>p.weight)), high=Math.max(...points.map(p=>p.weight));
+  const min=Math.max(0,low-(high-low||10)*.18),max=high+(high-low||10)*.18;
+  const positions=points.map((p,i)=>({x:pad+(points.length===1?.5:i/(points.length-1))*(width-pad*2),y:height-pad-(p.weight-min)/(max-min)*(height-pad*2)}));
+  const lines=positions.map(p=>`${p.x},${p.y}`).join(" ");
+  host.innerHTML=`<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Gewichtsentwicklung ${escapeHtml(stat.name)}" preserveAspectRatio="xMidYMid meet"><line x1="${pad}" x2="${width-pad}" y1="${height-pad}" y2="${height-pad}" stroke="#66717e"/><polyline points="${lines}" fill="none" stroke="#b7ff4a" stroke-width="2.5" stroke-linejoin="round"/>${positions.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="4" fill="#b7ff4a"><title>${escapeHtml(points[i].date)}: ${escapeHtml(points[i].raw)} · ${escapeHtml(points[i].reps)} Wdh.</title></circle>`).join("")}<text x="${pad}" y="14" fill="currentColor" font-size="11">${high} kg</text><text x="${pad}" y="${height-5}" fill="currentColor" font-size="10">${escapeHtml(formatDate(points[0].date))}</text><text x="${width-pad}" y="${height-5}" text-anchor="end" fill="currentColor" font-size="10">${escapeHtml(formatDate(points[points.length-1].date))}</text></svg>`;
+}
+function drawExerciseSuggestions() {
+ const input=document.getElementById("strength-name"),list=document.getElementById("exercise-suggestions");
+ if(!input||!list)return;
+ const query=input.value.trim().toLocaleLowerCase("de");
+ const matches=getExerciseSuggestions().filter(name=>name.toLocaleLowerCase("de").includes(query));
+ list.innerHTML=matches.map(name=>`<button type="button" class="exercise-option" role="option" data-suggest-exercise="${escapeHtml(name)}">${escapeHtml(name)}</button>`).join("");
+ list.hidden=!matches.length;
+ input.setAttribute("aria-expanded",String(!!matches.length));
+}
+app.addEventListener("focusin",ev=>{if(ev.target.id==="strength-name")drawExerciseSuggestions();});
+app.addEventListener("input",ev=>{
+ if(ev.target.closest("#strength-session-form")) {if(ev.target.id==="strength-name")drawExerciseSuggestions();captureStrengthDraft();}
+});
+app.addEventListener("change",ev=>{if(ev.target.closest("#strength-session-form"))captureStrengthDraft();if(ev.target.id==="stats-exercise-select")drawStrengthChart();});
+app.addEventListener("click",ev=>{
+ const option=ev.target.closest("[data-suggest-exercise]");
+ if(option){document.getElementById("strength-name").value=option.dataset.suggestExercise;document.getElementById("exercise-suggestions").hidden=true;document.getElementById("strength-name").setAttribute("aria-expanded","false");captureStrengthDraft();}
+});
+document.addEventListener("click",ev=>{
+ if(!ev.target.closest(".exercise-name-picker")){const list=document.getElementById("exercise-suggestions");if(list)list.hidden=true;}
+});
+entryDialog.addEventListener("input",captureEntryDraft);
+entryDialog.addEventListener("change",captureEntryDraft);
+entryDialog.addEventListener("close",()=>{if(editingEntryContext===null) return; captureEntryDraft();editingEntryContext=null;});
 
 function updateNav() {
   document.querySelectorAll(".nav-item").forEach(btn=>{
@@ -421,6 +526,7 @@ function allCalendarTrainings() {
     description:e.description || "",
     result:e.result || "",
     rating:e.rating,
+    competition:!!e.competition,
     kind:"discipline",
     areaId:e.disciplineId,
     color:areaColor(e.disciplineId)
@@ -494,13 +600,14 @@ function calendarDayCell(day, iso, outside) {
   const trainings = trainingsForDate(iso);
   const selected = selectedCalendarDate === iso;
   const today = todayISO() === iso;
+  const hasCompetition = trainings.some(item=>item.competition);
   const markers = trainings.slice(0,5).map(item =>
-    `<span class="calendar-marker" style="background:${item.color}"></span>`
+    item.competition ? `<span class="calendar-competition-marker" title="Wettkampf">🏆</span>` : `<span class="calendar-marker" style="background:${item.color}"></span>`
   ).join("");
 
   return `
     <button
-      class="calendar-day ${outside ? "outside" : ""} ${selected ? "selected" : ""} ${today ? "today" : ""}"
+      class="calendar-day ${outside ? "outside" : ""} ${selected ? "selected" : ""} ${today ? "today" : ""} ${hasCompetition ? "competition-day" : ""}"
       data-calendar-date="${iso}"
       type="button"
     >
@@ -522,7 +629,7 @@ function calendarTrainingCard(item) {
       <div class="calendar-training-body">
         <div class="entry-top">
           <div>
-            <div class="entry-title">${escapeHtml(item.title)}</div>
+            <div class="entry-title">${item.competition ? '🏆 Wettkampf · ' : ''}${escapeHtml(item.title)}</div>
             <div class="entry-meta">${escapeHtml(item.subtitle)}</div>
           </div>
           ${ratingBadge(item.rating,false)}
@@ -815,7 +922,7 @@ function entryCard(e) {
     <article class="entry clickable" data-entry-id="${e.id}" data-entry-kind="discipline">
       <div class="entry-top">
         <div>
-          <div class="entry-title">${formatDate(e.date)}</div>
+          <div class="entry-title">${e.competition ? "🏆 Wettkampf · " : ""}${formatDate(e.date)}</div>
           <div class="entry-meta">Antippen für Details oder Bearbeitung</div>
         </div>
         ${ratingBadge(e.rating)}
@@ -935,12 +1042,15 @@ function openEntryDialog(selectedAreaId = null, editId = null) {
 
   editingEntryContext = existing ? {id:existing.id} : null;
   populateEntryAreaSelect(areaId);
-  document.getElementById("entry-date").value = existing?.date || todayISO();
-  document.getElementById("entry-description").value = existing?.description || "";
-  document.getElementById("entry-result").value = existing?.result || "";
-  document.getElementById("entry-rating-value").value = String(normalizeRating(existing?.rating ?? 0));
+  const pending = !existing && readDrafts().entry?.editingId == null ? readDrafts().entry : null;
+  if (pending && getDiscipline(pending.areaId)) populateEntryAreaSelect(pending.areaId);
+  document.getElementById("entry-date").value = pending?.date || existing?.date || todayISO();
+  document.getElementById("entry-description").value = pending?.description ?? existing?.description ?? "";
+  document.getElementById("entry-result").value = pending?.result ?? existing?.result ?? "";
+  document.getElementById("entry-competition").checked = pending?.competition ?? existing?.competition ?? false;
+  document.getElementById("entry-rating-value").value = String(normalizeRating(pending?.rating ?? existing?.rating ?? 0));
   document.querySelectorAll("[data-entry-rating]").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.entryRating === String(normalizeRating(existing?.rating ?? 0)));
+    btn.classList.toggle("active", btn.dataset.entryRating === String(normalizeRating(pending?.rating ?? existing?.rating ?? 0)));
   });
 
   document.getElementById("dialog-eyebrow").textContent = existing ? "TRAINING BEARBEITEN" : "NEUES TRAINING";
@@ -992,6 +1102,7 @@ function openDetail(id,kind) {
   document.getElementById("detail-title").textContent = title;
   document.getElementById("detail-content").innerHTML = `
     <div class="detail-grid">
+      ${e.competition ? `<div class="detail-row"><span>Typ</span><strong>🏆 Wettkampf</strong></div>` : ""}
       <div class="detail-row"><span>Datum</span><strong>${formatDate(e.date)}</strong></div>
       <div class="detail-row"><span>Bewertung</span>${ratingBadge(e.rating)}</div>
       ${e.result ? `<div class="detail-row"><span>Resultat</span><strong>${escapeHtml(e.result)}</strong></div>` : ""}
@@ -1060,9 +1171,10 @@ function strengthSessionCard(s) {
 }
 
 function beginNewStrengthSession() {
-  editingStrengthSessionId = null;
-  editingStrengthExerciseIndex = null;
-  strengthDraftExercises = [];
+  const draft=readDrafts().strength;
+  editingStrengthSessionId = draft?.editingId && state.strengthSessions.some(s=>s.id===draft.editingId) ? draft.editingId : null;
+  editingStrengthExerciseIndex = draft?.editingIndex ?? null;
+  strengthDraftExercises = clone(draft?.exercises || []);
   strengthFormOpen = true;
   render();
 }
@@ -1074,6 +1186,7 @@ function beginEditStrengthSession(id) {
   editingStrengthExerciseIndex = null;
   strengthDraftExercises = clone(session.exercises || []);
   strengthFormOpen = true;
+  removeDraft("strength");
   detailDialog.close();
   route = {page:"strength", id:null};
   location.hash = "strength";
@@ -1098,7 +1211,7 @@ function renderStrength() {
           <p class="eyebrow">KRAFTÜBERSICHT</p>
           <h2>Dein Krafttraining</h2>
         </div>
-        ${lastSession ? ratingBadge(lastSession.rating,false) : ""}
+        <button class="icon-btn stats-button" data-action="toggle-strength-stats" type="button" aria-label="Kraft-Dashboard öffnen" title="Kraft-Dashboard">▥</button>
       </div>
 
       <div class="overview-stats">
@@ -1108,6 +1221,7 @@ function renderStrength() {
       </div>
     </section>
 
+    ${strengthStatsOpen ? renderStrengthStatistics() : ""}
     <section class="section">
       ${!strengthFormOpen ? `
         <button class="btn primary full" data-action="open-strength-form">＋ Training hinzufügen</button>
@@ -1129,12 +1243,11 @@ function renderStrength() {
           <div class="exercise-editor">
             <h3>${editingStrengthExerciseIndex === null ? "Übung hinzufügen" : "Übung bearbeiten"}</h3>
 
-            <datalist id="exercise-history">
-              ${suggestions.map(name=>`<option value="${escapeHtml(name)}"></option>`).join("")}
-            </datalist>
-
             <div class="exercise-grid">
-              <input class="exercise-name" id="strength-name" type="text" list="exercise-history" autocomplete="off" placeholder="Übung auswählen oder neu eingeben" />
+              <div class="exercise-name-picker">
+                <input class="exercise-name" id="strength-name" type="text" autocomplete="off" placeholder="Übung auswählen oder neu eingeben" role="combobox" aria-expanded="false" aria-controls="exercise-suggestions" />
+                <div id="exercise-suggestions" class="exercise-suggestions" role="listbox" hidden></div>
+              </div>
               <input id="strength-sets" type="number" min="1" inputmode="numeric" placeholder="Sätze" />
               <input id="strength-reps" type="text" inputmode="text" placeholder="Wdh." />
               <input id="strength-weight" type="text" inputmode="text" placeholder="z. B. 100–120 kg" />
@@ -1153,6 +1266,7 @@ function renderStrength() {
           </div>
 
           <div id="strength-draft-list"></div>
+          <p class="muted small" id="strength-autosave">Entwurf wird automatisch gespeichert.</p>
 
           <label>
             Gesamtbewertung des Trainings
@@ -1182,7 +1296,20 @@ function renderStrength() {
     </section>
   `;
 
-  if (strengthFormOpen) renderStrengthDraft();
+  if (strengthStatsOpen) drawStrengthChart();
+  if (strengthFormOpen) {
+    renderStrengthDraft();
+    const draft=readDrafts().strength;
+    if(draft && (draft.editingId||null)===(editingStrengthSessionId||null)) {
+      const form=document.getElementById("strength-session-form");
+      form.elements.date.value=draft.date||todayISO();
+      form.elements.rating.value=draft.rating||"0";
+      form.elements.notes.value=draft.notes||"";
+      for(const [key,id] of Object.entries({name:"strength-name",sets:"strength-sets",reps:"strength-reps",weight:"strength-weight",rating:"strength-exercise-rating"})) {
+        document.getElementById(id).value=draft.active?.[key]|| (key==="rating"?"0":"");
+      }
+    }
+  }
 }
 
 function backupSummary() {
@@ -1246,6 +1373,7 @@ function exportData() {
 }
 
 function closeStrengthForm() {
+  captureStrengthDraft();
   strengthFormOpen = false;
   editingStrengthSessionId = null;
   editingStrengthExerciseIndex = null;
@@ -1262,6 +1390,7 @@ function resetStrengthExerciseInputs() {
   const rating = document.getElementById("strength-exercise-rating");
   if (rating) rating.value = "0";
   editingStrengthExerciseIndex = null;
+  captureStrengthDraft();
 }
 
 function fillStrengthExerciseInputs(index) {
@@ -1274,6 +1403,7 @@ function fillStrengthExerciseInputs(index) {
   document.getElementById("strength-weight").value = ex.weight || "";
   document.getElementById("strength-exercise-rating").value = String(normalizeRating(ex.rating));
   document.getElementById("strength-name")?.focus();
+  captureStrengthDraft();
 }
 
 document.querySelectorAll(".nav-item").forEach(btn=>{
@@ -1285,11 +1415,13 @@ quickAddBtn.addEventListener("click",()=>{
 });
 
 document.getElementById("close-dialog").addEventListener("click",()=>{
+  captureEntryDraft();
   editingEntryContext = null;
   entryDialog.close();
 });
 
 document.getElementById("cancel-dialog").addEventListener("click",()=>{
+  captureEntryDraft();
   editingEntryContext = null;
   entryDialog.close();
 });
@@ -1302,11 +1434,13 @@ document.querySelectorAll("[data-entry-rating]").forEach(btn => {
     document.getElementById("entry-rating-value").value = btn.dataset.entryRating;
     document.querySelectorAll("[data-entry-rating]").forEach(other => other.classList.remove("active"));
     btn.classList.add("active");
+    captureEntryDraft();
   });
 });
 
 document.getElementById("entry-area-select").addEventListener("change", ev => {
   updateEntryDialogArea(ev.target.value);
+  captureEntryDraft();
 });
 
 document.getElementById("entry-form").addEventListener("submit",ev=>{
@@ -1317,6 +1451,7 @@ document.getElementById("entry-form").addEventListener("submit",ev=>{
     date:document.getElementById("entry-date").value,
     description:document.getElementById("entry-description").value.trim(),
     result:document.getElementById("entry-result").value.trim(),
+    competition:document.getElementById("entry-competition").checked,
     rating:Number(document.getElementById("entry-rating-value").value || 0)
   };
 
@@ -1328,6 +1463,7 @@ document.getElementById("entry-form").addEventListener("submit",ev=>{
   }
 
   saveState();
+  removeDraft("entry");
   editingEntryContext = null;
   entryDialog.close();
   render();
@@ -1427,6 +1563,7 @@ app.addEventListener("click",ev=>{
     return render();
   }
 
+  if (action === "toggle-strength-stats") { if(strengthFormOpen) captureStrengthDraft(); strengthStatsOpen=!strengthStatsOpen; return render(); }
   if (action === "open-strength-form") return beginNewStrengthSession();
   if (action === "close-strength-form") return closeStrengthForm();
 
@@ -1441,6 +1578,7 @@ app.addEventListener("click",ev=>{
     if (editingStrengthExerciseIndex === index) resetStrengthExerciseInputs();
     else if (editingStrengthExerciseIndex !== null && editingStrengthExerciseIndex > index) editingStrengthExerciseIndex--;
     renderStrengthDraft();
+    captureStrengthDraft();
     return;
   }
 
@@ -1467,6 +1605,7 @@ app.addEventListener("click",ev=>{
 
     resetStrengthExerciseInputs();
     renderStrengthDraft();
+    captureStrengthDraft();
     return;
   }
 
@@ -1474,6 +1613,7 @@ app.addEventListener("click",ev=>{
   if (action === "import") return document.getElementById("import-file")?.click();
   if (action === "reset" && confirm("Wirklich alle lokalen Daten löschen? Auch deine selbst angelegten Disziplinen werden entfernt.")) {
     state = initialState();
+    removeDraft("entry"); removeDraft("strength");
     saveState();
     return render();
   }
@@ -1585,6 +1725,7 @@ app.addEventListener("submit",ev=>{
     }
 
     saveState();
+    removeDraft("strength");
     strengthDraftExercises = [];
     strengthFormOpen = false;
     editingStrengthSessionId = null;
@@ -1601,6 +1742,7 @@ document.addEventListener("change",async ev=>{
   try {
     const data = JSON.parse(await file.text());
     state = migrateState(data);
+    removeDraft("entry"); removeDraft("strength");
     saveState();
     alert("Backup erfolgreich importiert.");
     render();

@@ -1373,3 +1373,24 @@ select {
     justify-content: flex-end;
   }
 }
+
+/* Erweiterungen v13 */
+.calendar-day.competition-day { box-shadow: inset 0 0 0 1px #e3ad49; background:rgba(227,173,73,.10); }
+.calendar-competition-marker { font-size:12px;line-height:12px; }
+.competition-toggle { display:flex;align-items:center;gap:10px;padding:12px;border:1px solid #987435;border-radius:12px;background:rgba(227,173,73,.08); }
+.competition-toggle input { width:20px;height:20px;flex-shrink:0;accent-color:#e3ad49; }
+.exercise-name-picker {position:relative;grid-column:1 / -1;min-width:0;}
+.exercise-name-picker input {width:100%;}
+.exercise-suggestions {position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:20;max-height:220px;overflow-y:auto;background:#1d232b;border:1px solid #73808c;border-radius:12px;box-shadow:0 12px 25px #0008;}
+.exercise-suggestions[hidden] {display:none;}
+.exercise-option {display:block;width:100%;padding:12px 14px;text-align:left;border:0;border-bottom:1px solid #ffffff16;background:transparent;color:#fff;font:inherit;cursor:pointer;}
+.exercise-option:hover,.exercise-option:focus {background:#344052;}
+.stats-button {font-size:25px;flex-shrink:0;}
+.strength-stats-panel {display:grid;gap:16px;}
+.strength-stats-panel h3 {font-size:16px;margin:6px 0 0;}
+.strength-records {display:grid;gap:7px;}
+.strength-record {display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid #ffffff1b;}
+.strength-record strong,.strength-record small,.record-value small {display:block;}
+.strength-record small {font-size:12px;color:#a4acb6;margin-top:4px;}
+.record-value {text-align:right;font-weight:700;font-size:13px;}
+.strength-progress-chart svg {width:100%;height:auto;max-height:240px;overflow:visible;}
